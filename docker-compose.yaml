@@ -1,0 +1,107 @@
+version: '3'
+
+######################### AIRFLOW ##################################
+
+x-airflow-common:
+  &airflow-common
+  build: ./airflow
+  volumes:
+    - ./airflow:/opt/airflow
+  depends_on:
+    - postgres_airflow
+  links:
+    - postgres_airflow
+    - postgres_src
+    - postgres_dwh
+    - pyspark
+
+services:
+  airflow-init:
+    << : *airflow-common
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - airflow db init &&
+        airflow users create
+        --role Admin
+        --username airflow
+        --password airflow
+        --email airflow@airflow.com
+        --firstname airflow
+        --lastname airflow &&
+        airflow variables import variables.json &&
+        airflow connections import connections.json
+    restart: on-failure
+
+  airflow-webserver:
+    << : *airflow-common
+    command: airflow webserver
+    ports:
+      - 8786:8080
+    restart: always
+
+  airflow-scheduler:
+    << : *airflow-common
+    command: airflow scheduler
+    restart: always
+
+######################### POSTGRES ##################################
+
+  postgres_airflow:
+    image: postgres:15.2
+    ports:
+      - 5433:5432
+    environment:
+      POSTGRES_DB: "airflow_db"
+      POSTGRES_USER: "airflow_user"
+      POSTGRES_PASSWORD: "airflow_password"
+      POSTGRES_HOST_AUTH_METHOD: "password"
+    volumes:
+      - ./data/postgres_airflow:/var/lib/postgresql/data
+      - ./sql_scripts:/sql_scripts
+
+  postgres_src:
+    image: postgres:15.2
+    ports:
+      - 5434:5432
+    environment:
+      POSTGRES_DB: "src_db"
+      POSTGRES_USER: "src_user"
+      POSTGRES_PASSWORD: "src_password"
+      POSTGRES_HOST_AUTH_METHOD: "password"
+    volumes:
+      - ./data/postgres_src:/var/lib/postgresql/data
+      - ./sql_scripts:/sql_scripts
+      - ./sql_scripts/init.sql:/docker-entrypoint-initdb.d/init.sql # инициализируем источник
+
+  postgres_dwh:
+    image: postgres:15.2
+    ports:
+      - 5435:5432
+    environment:
+      POSTGRES_DB: "dwh_db"
+      POSTGRES_USER: "dwh_user"
+      POSTGRES_PASSWORD: "dwh_password"
+      POSTGRES_HOST_AUTH_METHOD: "password"
+    volumes:
+      - ./data/postgres_dwh:/var/lib/postgresql/data
+      - ./sql_scripts:/sql_scripts
+
+
+############################# SPARK #################################
+
+  pyspark:
+    image: jupyter/pyspark-notebook:latest
+    ports:
+      - 9999:8888
+      - 9090:8080
+      - 7077:7077
+      - 7000:7000
+      - 18080:18080
+    links:
+      - postgres_airflow
+      - postgres_src
+      - postgres_dwh
+    volumes:
+      - ./data/pyspark:/home/jovyan/work
+

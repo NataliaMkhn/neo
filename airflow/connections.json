@@ -1,0 +1,22 @@
+{
+    "src": {
+        "conn_type": "postgres",
+        "description": null,
+        "login": "src_user",
+        "password": "src_password",
+        "host": "postgres_src",
+        "port": 5432,
+        "schema": "src_db",
+        "extra": null
+    },
+    "dwh": {
+        "conn_type": "postgres",
+        "description": null,
+        "login": "dwh_user",
+        "password": "dwh_password",
+        "host": "postgres_dwh",
+        "port": 5432,
+        "schema": "dwh_db",
+        "extra": null
+    }
+}

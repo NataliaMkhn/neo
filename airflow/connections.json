@@ -6,7 +6,7 @@
         "password": "src_password",
         "host": "postgres_src",
         "port": 5432,
-        "schema": "src_db",
+        "schema": "dwh",
         "extra": null
     },
     "dwh": {

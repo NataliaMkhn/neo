@@ -65,7 +65,7 @@ services:
     ports:
       - 5434:5432
     environment:
-      POSTGRES_DB: "src_db"
+      POSTGRES_DB: "dwh"
       POSTGRES_USER: "src_user"
       POSTGRES_PASSWORD: "src_password"
       POSTGRES_HOST_AUTH_METHOD: "password"
